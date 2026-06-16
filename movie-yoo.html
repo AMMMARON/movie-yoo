@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Movie Yoo — Recommender</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15121c;
+    --panel:#211c2b;
+    --panel-2:#2a2335;
+    --gold:#d9a444;
+    --gold-dim:#8c7237;
+    --cream:#f3ecdd;
+    --muted:#9a92a8;
+    --line:#372f44;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--cream);
+    font-family:'Inter', sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:28px 16px 40px;
+  }
+
+  .stage{
+    width:100%;
+    max-width:600px;
+  }
+
+  /* --- marquee header --- */
+  .marquee{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:22px 22px 20px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .bulbs{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:14px;
+    padding:0 2px;
+  }
+  .bulb{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--gold);
+    box-shadow:0 0 6px 1px rgba(217,164,68,0.7);
+    animation:blink 2.4s infinite ease-in-out;
+  }
+  .bulb:nth-child(odd){ animation-delay:1.2s; }
+  @keyframes blink{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.25; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .bulb{ animation:none; }
+  }
+
+  .brand{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:42px;
+    letter-spacing:4px;
+    color:var(--gold);
+    margin:0;
+    line-height:1;
+  }
+
+  .tagline{
+    color:var(--muted);
+    font-size:13.5px;
+    margin:10px auto 0;
+    max-width:420px;
+    line-height:1.5;
+  }
+
+  /* --- sprocket divider --- */
+  .sprocket{
+    height:14px;
+    margin:22px 0;
+    background-image: radial-gradient(circle, var(--bg) 3.5px, transparent 4px);
+    background-size: 22px 14px;
+    background-position: center;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+
+  /* --- eyebrow labels --- */
+  .eyebrow{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:2px;
+    color:var(--gold-dim);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+
+  /* --- picker --- */
+  .picker{ margin-top:4px; }
+
+  select{
+    width:100%;
+    background:var(--panel);
+    color:var(--cream);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:13px 14px;
+    font-family:'Inter', sans-serif;
+    font-size:15px;
+    font-weight:500;
+    appearance:none;
+    cursor:pointer;
+    background-image: linear-gradient(45deg, transparent 50%, var(--gold) 50%), linear-gradient(135deg, var(--gold) 50%, transparent 50%);
+    background-position: calc(100% - 22px) center, calc(100% - 16px) center;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+  }
+  select:focus{
+    outline:none;
+    box-shadow:0 0 0 3px rgba(217,164,68,0.35);
+    border-color:var(--gold-dim);
+  }
+
+  /* --- selected movie card --- */
+  .selected-card{
+    margin-top:18px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--gold);
+    border-radius:6px;
+    padding:18px 18px 16px;
+  }
+  .selected-title{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:24px;
+    letter-spacing:1px;
+    color:var(--cream);
+    margin:0 0 8px;
+  }
+  .selected-desc{
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.55;
+    margin:0;
+  }
+
+  /* --- results --- */
+  .results{ margin-top:4px; }
+
+  .match-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:15px 16px 14px;
+    margin-bottom:10px;
+  }
+
+  .match-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:6px;
+  }
+
+  .match-title{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:18px;
+    letter-spacing:0.5px;
+    color:var(--cream);
+  }
+
+  .match-score{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--gold);
+    white-space:nowrap;
+  }
+
+  .match-desc{
+    color:var(--muted);
+    font-size:12.5px;
+    line-height:1.5;
+    margin:0 0 10px;
+  }
+
+  .meter{
+    display:flex;
+    gap:3px;
+  }
+  .frame{
+    flex:1;
+    height:7px;
+    border-radius:1px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+  }
+  .frame.filled{
+    background:var(--gold);
+    border-color:var(--gold);
+  }
+
+  .footnote{
+    text-align:center;
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.5px;
+    margin:22px 0 0;
+    opacity:0.8;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="marquee">
+    <div class="bulbs">
+      <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+      <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+      <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+      <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+    </div>
+    <h1 class="brand">MOVIE YOO</h1>
+    <p class="tagline">Pick a film and the engine matches it against the catalog using TF&#8209;IDF vectors and cosine similarity — computed live in your browser.</p>
+  </div>
+
+  <div class="sprocket"></div>
+
+  <div class="picker">
+    <label class="eyebrow" for="movie-select">Now Selecting</label>
+    <select id="movie-select"></select>
+  </div>
+
+  <div class="selected-card">
+    <h2 class="selected-title" id="selected-title"></h2>
+    <p class="selected-desc" id="selected-desc"></p>
+  </div>
+
+  <div class="sprocket"></div>
+
+  <div class="results">
+    <span class="eyebrow">Closest Matches</span>
+    <div id="results-list"></div>
+  </div>
+
+  <p class="footnote">movie-yoo · content-based filtering, recreated client-side</p>
+
+</div>
+
+<script>
+  const movies = [
+    {id:1, title:"The Shawshank Redemption", description:"Two imprisoned men bond over a number of years finding solace and eventual redemption through acts of common decency."},
+    {id:2, title:"The Godfather", description:"An organized crime dynasty's aging patriarch transfers control of his clandestine empire to his reluctant son."},
+    {id:3, title:"The Dark Knight", description:"When the menace known as the Joker wreaks havoc and chaos on the people of Gotham Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice."},
+    {id:4, title:"Pulp Fiction", description:"The lives of two mob hitmen a boxer a gangster and his wife and a pair of diner bandits intertwine in four tales of violence and redemption."},
+    {id:5, title:"Inception", description:"A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O."},
+    {id:6, title:"The Matrix", description:"A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers."},
+    {id:7, title:"Interstellar", description:"A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival."},
+    {id:8, title:"The Prestige", description:"After a tragic accident two stage magicians engage in a battle to create the ultimate illusion while sacrificing everything they have to outwit each other."},
+    {id:9, title:"Batman Begins", description:"After training with his mentor Batman begins his fight to free crime-ridden Gotham City from corruption."},
+    {id:10, title:"Gladiator", description:"A former Roman General sets out to exact vengeance against the corrupt emperor who murdered his family and sent him into slavery."}
+  ];
+
+  const STOP_WORDS = new Set(["a","about","above","after","again","against","all","am","an","and","any","are","as","at","be","because","been","before","being","below","between","both","but","by","can","did","do","does","doing","down","during","each","few","for","from","further","had","has","have","having","he","her","here","hers","herself","him","himself","his","how","i","if","in","into","is","it","its","itself","just","me","more","most","my","myself","no","nor","not","now","of","off","on","once","only","or","other","our","ours","ourselves","out","over","own","s","same","she","should","so","some","such","t","than","that","the","their","theirs","them","themselves","then","there","these","they","this","those","through","to","too","under","until","up","very","was","we","were","what","when","where","which","while","who","whom","why","will","with","you","your","yours","yourself","yourselves","one","two","who","known","known"]);
+
+  function tokenize(text){
+    const words = text.toLowerCase().match(/[a-z]{2,}/g) || [];
+    return words.filter(w => !STOP_WORDS.has(w));
+  }
+
+  function buildModel(docs){
+    const tokenized = docs.map(d => tokenize(d.description));
+    const vocabSet = new Set();
+    tokenized.forEach(toks => toks.forEach(t => vocabSet.add(t)));
+    const vocab = Array.from(vocabSet);
+    const vIndex = new Map(vocab.map((w,i) => [w,i]));
+
+    const N = docs.length;
+    const df = new Array(vocab.length).fill(0);
+    const termCounts = tokenized.map(toks => {
+      const counts = new Array(vocab.length).fill(0);
+      toks.forEach(t => counts[vIndex.get(t)]++);
+      return counts;
+    });
+    termCounts.forEach(counts => {
+      counts.forEach((c,i) => { if(c>0) df[i]++; });
+    });
+
+    const idf = df.map(d => Math.log((1+N)/(1+d)) + 1);
+
+    const vectors = termCounts.map(counts => {
+      const raw = counts.map((c,i) => c * idf[i]);
+      const norm = Math.sqrt(raw.reduce((s,v) => s + v*v, 0)) || 1;
+      return raw.map(v => v / norm);
+    });
+
+    return vectors;
+  }
+
+  function cosineSim(a, b){
+    let dot = 0;
+    for(let i=0;i<a.length;i++) dot += a[i]*b[i];
+    return dot;
+  }
+
+  const vectors = buildModel(movies);
+
+  function getRecommendations(idx){
+    const scores = vectors.map((v,i) => ({ i, score: i===idx ? -1 : cosineSim(vectors[idx], v) }));
+    scores.sort((a,b) => b.score - a.score);
+    return scores.slice(0,5);
+  }
+
+  const select = document.getElementById('movie-select');
+  movies.forEach((m, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = m.title;
+    select.appendChild(opt);
+  });
+
+  function render(idx){
+    const movie = movies[idx];
+    document.getElementById('selected-title').textContent = movie.title;
+    document.getElementById('selected-desc').textContent = movie.description;
+
+    const recs = getRecommendations(idx);
+    const list = document.getElementById('results-list');
+    list.innerHTML = '';
+
+    recs.forEach(r => {
+      const m = movies[r.i];
+      const pct = Math.max(0, Math.round(r.score * 100));
+      const filledFrames = Math.round(r.score * 10);
+
+      const card = document.createElement('div');
+      card.className = 'match-card';
+
+      const top = document.createElement('div');
+      top.className = 'match-top';
+      const title = document.createElement('span');
+      title.className = 'match-title';
+      title.textContent = m.title;
+      const score = document.createElement('span');
+      score.className = 'match-score';
+      score.textContent = pct + '% match';
+      top.appendChild(title);
+      top.appendChild(score);
+
+      const desc = document.createElement('p');
+      desc.className = 'match-desc';
+      desc.textContent = m.description;
+
+      const meter = document.createElement('div');
+      meter.className = 'meter';
+      for(let f=0; f<10; f++){
+        const frame = document.createElement('div');
+        frame.className = 'frame' + (f < filledFrames ? ' filled' : '');
+        meter.appendChild(frame);
+      }
+
+      card.appendChild(top);
+      card.appendChild(desc);
+      card.appendChild(meter);
+      list.appendChild(card);
+    });
+  }
+
+  select.addEventListener('change', e => render(parseInt(e.target.value)));
+
+  const defaultIdx = movies.findIndex(m => m.title === 'The Dark Knight');
+  select.value = defaultIdx;
+  render(defaultIdx);
+</script>
+
+</body>
+</html>
